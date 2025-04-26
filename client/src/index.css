@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 98%;
+    
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 0 76% 62%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 73%;
+    
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 76% 62%;
+    
+    --radius: 1.5rem;
+  }
+  
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 7%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+    
+    --primary: 0 76% 62%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 7%;
+    
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 7%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 76% 62%;
+  }
+}
+
+/* Custom CSS for glassmorphism */
+.glass-card {
+  background: rgba(30, 30, 30, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Font styling */
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
