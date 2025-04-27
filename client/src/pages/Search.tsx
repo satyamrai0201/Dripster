@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { debounce } from '@/lib/utils';
 import { Helmet } from 'react-helmet';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Search() {
   const [location] = useLocation();
@@ -21,9 +22,20 @@ export default function Search() {
     }
   }, [location]);
   
-  // Fetch search results
+  // Fetch search results using Supabase
   const { data: products, isLoading, error } = useQuery<Product[]>({
-    queryKey: [`/api/products/search?q=${encodeURIComponent(searchQuery.trim())}`],
+    queryKey: ['search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim()) return [];
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
+      
+      if (error) throw error;
+      return data || [];
+    },
     enabled: searchQuery.trim().length > 0,
   });
   
