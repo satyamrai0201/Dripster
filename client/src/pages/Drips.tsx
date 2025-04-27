@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
+// Assuming your Product type matches the Supabase table structure
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ui/product-card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,36 +13,94 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const DRIPS_CATEGORIES = ['accessories'];
+// Import Supabase client
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client (replace with your actual Supabase URL and Anon Key)
+// It's recommended to use environment variables for these keys
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Ensure keys are defined before creating the client
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase URL or Anon Key is not defined.');
+  // Handle this error appropriately in a real application (e.g., show an error message)
+}
+
+const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+
+
+const DRIPS_CATEGORIES = ['accessories']; // Keeping this for reference, but filtering directly
 const GENDERS = ['men', 'women'];
 
 export default function DripsPage() {
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
+  // Keeping selectedCategory state, but it's defaulted to 'accessories' and not changed in this component
   const [selectedCategory, setSelectedCategory] = useState<string | null>('accessories');
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState('newest'); // Default sort
 
-  const queryString = new URLSearchParams({
-    ...(selectedGender ? { gender: selectedGender } : {}),
-    ...(selectedCategory ? { category: selectedCategory } : {}),
-    ...(sortBy ? { sortBy } : {}),
-  }).toString();
+  // Use selectedGender, selectedCategory, and sortBy as part of the query key
+  const queryKey = ['drips', selectedGender, selectedCategory, sortBy];
 
   const { data: products, isLoading, error } = useQuery<Product[]>({
-    queryKey: ['/api/products/drips', queryString],
+    queryKey: queryKey,
     queryFn: async () => {
-      const res = await fetch(`/api/products?${queryString}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      return res.json();
+      let query = supabase
+        .from('products')
+        .select('*');
+
+      // Apply category filter (always 'accessories' based on default state)
+      if (selectedCategory) {
+        query = query.eq('category', selectedCategory);
+      }
+
+      // Apply gender filter if selected
+      if (selectedGender) {
+        query = query.eq('gender', selectedGender);
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'newest':
+          // Assuming 'id' or 'created_at' is a good indicator of newest
+          // If you have a 'created_at' timestamp column, use that instead of 'id'
+          query = query.order('id', { ascending: false });
+          break;
+        case 'price-low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price-high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+        default:
+          // Default sorting if no option is selected or recognized
+           query = query.order('id', { ascending: false });
+          break;
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data || []; // Return empty array if data is null
     },
   });
+
+  // Note: Category filter is fixed to 'accessories' in state and not changed by UI elements here.
+  // If you add category tabs/filters later, you would use a similar handler as handleGenderChange.
 
   return (
     <>
       <Helmet>
         <title>Drips | Dripster</title>
-        <meta 
-          name="description" 
-          content="Accessorize your fit with stylish drips from Dripster. Shop premium accessories for men and women." 
+        <meta
+          name="description"
+          content="Accessorize your fit with stylish drips from Dripster. Shop premium accessories for men and women."
         />
       </Helmet>
 
@@ -100,7 +159,7 @@ export default function DripsPage() {
                   selectedGender === gender
                   ? 'bg-red-600 text-white border-red-600'
                   : 'bg-white text-black border-gray-300 hover:border-red-500'
-              
+
                 }`}
               >
                 {gender.charAt(0).toUpperCase() + gender.slice(1)}
@@ -108,7 +167,6 @@ export default function DripsPage() {
             ))}
           </div>
         </div>
-        
 
 
         {/* Loading */}

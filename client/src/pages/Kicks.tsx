@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
+// Assuming your Product type matches the Supabase table structure
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ui/product-card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,40 +13,95 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const KICKS_CATEGORIES = ['sneakers'];
+// Import Supabase client
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client (replace with your actual Supabase URL and Anon Key)
+// It's recommended to use environment variables for these keys
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Ensure keys are defined before creating the client
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase URL or Anon Key is not defined.');
+  // Handle this error appropriately in a real application (e.g., show an error message)
+}
+
+const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+
+
+const KICKS_CATEGORIES = ['sneakers']; // Keeping this for reference, but filtering directly
 const GENDERS = ['men', 'women'];
 
 export default function KicksPage() {
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
+  // Keeping selectedCategory state, but it's defaulted to 'sneakers' and not changed in this component
   const [selectedCategory, setSelectedCategory] = useState<string | null>('sneakers');
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState('newest'); // Default sort
 
-  const queryString = new URLSearchParams({
-    ...(selectedGender ? { gender: selectedGender } : {}),
-    ...(selectedCategory ? { category: selectedCategory } : {}),
-    ...(sortBy ? { sortBy } : {}),
-  }).toString();
+  // Use selectedGender, selectedCategory, and sortBy as part of the query key
+  const queryKey = ['kicks', selectedGender, selectedCategory, sortBy];
 
   const {
     data: products = [], // ✅ Default fallback to avoid undefined error
     isLoading,
     error,
   } = useQuery<Product[]>({
-    queryKey: ['/api/products/kicks', queryString],
+    queryKey: queryKey,
     queryFn: async () => {
-      const res = await fetch(`/api/products?${queryString}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      return res.json();
+      let query = supabase
+        .from('products')
+        .select('*')
+        // Always filter by category 'sneakers' for this page
+        .eq('category', 'sneakers'); // Use the fixed category
+
+      // Apply gender filter if selected
+      if (selectedGender) {
+        query = query.eq('gender', selectedGender);
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'newest':
+          // Assuming 'id' or 'created_at' is a good indicator of newest
+          // If you have a 'created_at' timestamp column, use that instead of 'id'
+          query = query.order('id', { ascending: false });
+          break;
+        case 'price-low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price-high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+        default:
+          // Default sorting if no option is selected or recognized
+           query = query.order('id', { ascending: false });
+          break;
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data || []; // Return empty array if data is null
     },
   });
+
+  // Note: Category filter is fixed to 'sneakers' in state and not changed by UI elements here.
+  // If you add category filters later, you would need to adjust the state and query logic.
 
   return (
     <>
       <Helmet>
         <title>Kicks | Dripster</title>
-        <meta 
-          name="description" 
-          content="Shop the freshest kicks and sneakers on Dripster. Explore trendy styles for men and women." 
+        <meta
+          name="description"
+          content="Shop the freshest kicks and sneakers on Dripster. Explore trendy styles for men and women."
         />
       </Helmet>
 
@@ -57,6 +113,7 @@ export default function KicksPage() {
             <p className="text-[#BBBBBB] mb-2">
               Explore the freshest sneaker drops and trendy kicks for all.
             </p>
+            {/* Product count now reflects the filtered data from Supabase */}
             <p className="text-[#BBBBBB]">
               {products.length} {products.length === 1 ? 'product' : 'products'} found
             </p>
@@ -93,6 +150,18 @@ export default function KicksPage() {
           {/* Gender Filter */}
           <div className="flex items-center gap-2">
             <span className="font-semibold text-white">Gender:</span>
+            {/* Add an 'All' button for gender */}
+             <button
+                key="all"
+                onClick={() => setSelectedGender(null)} // Set to null for 'All'
+                className={`px-3 py-1 rounded-full text-sm font-medium border transition-all ${
+                  selectedGender === null
+                  ? 'bg-red-600 text-white border-red-600'
+                  : 'bg-white text-black border-gray-300 hover:border-red-500'
+              }`}
+              >
+                All
+              </button>
             {GENDERS.map((gender) => (
               <button
                 key={gender}

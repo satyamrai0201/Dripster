@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
+// Assuming your Product type matches the Supabase table structure
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ui/product-card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,23 +13,71 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+// Import Supabase client
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client (replace with your actual Supabase URL and Anon Key)
+// It's recommended to use environment variables for these keys
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Ensure keys are defined before creating the client
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase URL or Anon Key is not defined.');
+  // Handle this error appropriately in a real application (e.g., show an error message)
+}
+
+const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+
+
 const GENDERS = ['men', 'women'];
 
 export default function AllProductsPage() {
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState('newest'); // Default sort
 
-  const queryString = new URLSearchParams({
-    ...(selectedGender ? { gender: selectedGender } : {}),
-    ...(sortBy ? { sortBy } : {}),
-  }).toString();
+  // Use the selectedGender and sortBy as part of the query key
+  const queryKey = ['products', selectedGender, sortBy];
 
   const { data: products, isLoading, error } = useQuery<Product[]>({
-    queryKey: ['/api/products/all', queryString],
+    queryKey: queryKey,
     queryFn: async () => {
-      const res = await fetch(`/api/products?${queryString}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      return res.json();
+      let query = supabase.from('products').select('*');
+
+      // Apply gender filter if selected
+      if (selectedGender) {
+        query = query.eq('gender', selectedGender);
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'newest':
+          // Assuming 'id' or 'created_at' is a good indicator of newest
+          // If you have a 'created_at' timestamp column, use that instead of 'id'
+          query = query.order('id', { ascending: false });
+          break;
+        case 'price-low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price-high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+        default:
+          // Default sorting if no option is selected or recognized
+           query = query.order('id', { ascending: false });
+          break;
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data || []; // Return empty array if data is null
     },
   });
 
@@ -36,9 +85,9 @@ export default function AllProductsPage() {
     <>
       <Helmet>
         <title>All Products | Dripster</title>
-        <meta 
-          name="description" 
-          content="Browse all fashion products from Dripster. Find your fit across all categories and styles." 
+        <meta
+          name="description"
+          content="Browse all fashion products from Dripster. Find your fit across all categories and styles."
         />
       </Helmet>
 

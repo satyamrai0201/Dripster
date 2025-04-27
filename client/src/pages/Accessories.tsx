@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
+// Assuming your Product type matches the Supabase table structure
 import { Product } from '../types';
 import { ProductCard } from '../components/ui/product-card';
 import { Skeleton } from '../components/ui/skeleton';
@@ -13,13 +14,80 @@ import {
 } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
+// Import Supabase client
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client (replace with your actual Supabase URL and Anon Key)
+// It's recommended to use environment variables for these keys
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Ensure keys are defined before creating the client
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase URL or Anon Key is not defined.');
+  // Handle this error appropriately in a real application (e.g., show an error message)
+}
+
+const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+
+
 export default function Accessories() {
-  const [sortBy, setSortBy] = useState('newest');
-  const [gender, setGender] = useState('all');
+  const [sortBy, setSortBy] = useState('newest'); // Default sort
+  const [gender, setGender] = useState('all'); // Default gender filter
+
+  // Use gender and sortBy as part of the query key
+  const queryKey = ['accessories', gender, sortBy];
 
   // Fetch products
   const { data: products, isLoading, error } = useQuery<Product[]>({
-    queryKey: [`/api/products?gender=${gender}&category=accessories&sortBy=${sortBy}`]
+    queryKey: queryKey,
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select('*')
+        // Always filter by category 'accessories' for this page
+        .eq('category', 'accessories');
+
+      // Apply gender filter if not 'all'
+      if (gender !== 'all') {
+        query = query.eq('gender', gender);
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'newest':
+          // Assuming 'id' or 'created_at' is a good indicator of newest
+          // If you have a 'created_at' timestamp column, use that instead of 'id'
+          query = query.order('id', { ascending: false });
+          break;
+        case 'price-low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price-high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+         case 'popularity':
+          // Assuming 'review_count' is a proxy for popularity
+          // If you have a dedicated popularity score or view count, use that
+          query = query.order('review_count', { ascending: false });
+          break;
+        default:
+          // Default sorting if no option is selected or recognized
+           query = query.order('id', { ascending: false });
+          break;
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data || []; // Return empty array if data is null
+    },
   });
 
   const handleGenderChange = (value: string) => {
@@ -30,12 +98,12 @@ export default function Accessories() {
     <>
       <Helmet>
         <title>Accessories | Dripster</title>
-        <meta 
-          name="description" 
+        <meta
+          name="description"
           content="Shop our accessories collection at Dripster. Find the perfect finishing touches for your streetwear outfits."
         />
       </Helmet>
-      
+
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row justify-between items-start mb-8">
           <div>
@@ -47,7 +115,7 @@ export default function Accessories() {
               </p>
             )}
           </div>
-          
+
           <div className="mt-4 md:mt-0 flex items-center">
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-[180px] bg-[rgba(42,42,42,0.7)] border-[rgba(255,255,255,0.1)]">
@@ -63,7 +131,7 @@ export default function Accessories() {
             </Select>
           </div>
         </div>
-        
+
         {/* Gender Tabs */}
         <div className="mb-8">
           <Tabs defaultValue="all" onValueChange={handleGenderChange}>
@@ -74,7 +142,7 @@ export default function Accessories() {
             </TabsList>
           </Tabs>
         </div>
-      
+
         {/* Products Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -97,7 +165,7 @@ export default function Accessories() {
             ))}
           </div>
         ) : error ? (
-          <div 
+          <div
             className="p-8 rounded-xl text-center"
             style={{
               background: 'rgba(30, 30, 30, 0.7)',
@@ -109,7 +177,7 @@ export default function Accessories() {
             <p>Failed to load products. Please try again later.</p>
           </div>
         ) : products && products.length === 0 ? (
-          <div 
+          <div
             className="p-8 rounded-xl text-center"
             style={{
               background: 'rgba(30, 30, 30, 0.7)',
@@ -129,9 +197,9 @@ export default function Accessories() {
             ))}
           </div>
         )}
-        
+
         {/* Style Guide */}
-        <div 
+        <div
           className="mt-16 p-8 rounded-xl"
           style={{
             background: 'rgba(30, 30, 30, 0.7)',
@@ -153,7 +221,7 @@ export default function Accessories() {
                 <li>Balance proportions for visual harmony</li>
               </ul>
             </div>
-            <div 
+            <div
               className="flex-1 h-48 rounded-xl"
               style={{
                 background: 'rgba(220, 38, 38, 0.1)',

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet';
+// Assuming your Product type matches the Supabase table structure
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ui/product-card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,36 +13,93 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+// Import Supabase client
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client (replace with your actual Supabase URL and Anon Key)
+// It's recommended to use environment variables for these keys
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Ensure keys are defined before creating the client
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase URL or Anon Key is not defined.');
+  // Handle this error appropriately in a real application (e.g., show an error message)
+}
+
+const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
+
+
 const allCategories = ['tshirts', 'hoodies', 'tops', 'sweatshirts'];
 const genders = ['men', 'women'];
 
 export default function FitsPage() {
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState('newest'); // Default sort
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const queryParams = new URLSearchParams();
-
-  if (selectedCategory) {
-    queryParams.append('category', selectedCategory);
-  } else {
-    queryParams.append('categories', allCategories.join(','));
-  }
-
-  if (selectedGender) queryParams.append('gender', selectedGender);
-  if (sortBy) queryParams.append('sortBy', sortBy);
+  // Use selectedGender, selectedCategory, and sortBy as part of the query key
+  const queryKey = ['fits', selectedGender, selectedCategory, sortBy];
 
   const { data: products = [], isLoading, error } = useQuery<Product[]>({
-    queryKey: [`/api/products?${queryParams.toString()}`],
+    queryKey: queryKey,
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select('*');
+
+      // Apply category filter: if a specific category is selected, filter by it.
+      // Otherwise, filter by all categories in the allCategories array.
+      if (selectedCategory) {
+        query = query.eq('category', selectedCategory);
+      } else {
+        query = query.in('category', allCategories);
+      }
+
+      // Apply gender filter if selected
+      if (selectedGender) {
+        query = query.eq('gender', selectedGender);
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case 'newest':
+          // Assuming 'id' or 'created_at' is a good indicator of newest
+          // If you have a 'created_at' timestamp column, use that instead of 'id'
+          query = query.order('id', { ascending: false });
+          break;
+        case 'price-low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price-high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+        default:
+          // Default sorting if no option is selected or recognized
+           query = query.order('id', { ascending: false });
+          break;
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data || []; // Return empty array if data is null
+    },
   });
 
   return (
     <>
       <Helmet>
         <title>Fits | Dripster</title>
-        <meta 
-          name="description" 
-          content="Explore the freshest fits in streetwear. Find tees, hoodies, sweatshirts and more in the Dripster Fits collection." 
+        <meta
+          name="description"
+          content="Explore the freshest fits in streetwear. Find tees, hoodies, sweatshirts and more in the Dripster Fits collection."
         />
       </Helmet>
 
@@ -60,27 +118,12 @@ export default function FitsPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-montserrat font-bold mb-1">Fits</h1>
             <p className="text-[#BBBBBB] mb-4">Your go-to gear for everyday streetwear vibes</p>
-            {products && (
-  <p className="text-[#BBBBBB]">
-    {
-      products.filter((product) =>
-        ['tshirts', 'hoodies', 'tops', 'sweatshirts'].includes(
-          product.category.toLowerCase()
-        )
-      ).length
-    }{' '}
-    {
-      products.filter((product) =>
-        ['tshirts', 'hoodies', 'tops', 'sweatshirts'].includes(
-          product.category.toLowerCase()
-        )
-      ).length === 1
-        ? 'product'
-        : 'products'
-    }{' '}
-    found
-  </p>
-)}
+            {/* Product count now reflects the filtered data from Supabase */}
+            {Array.isArray(products) && (
+              <p className="text-[#BBBBBB]">
+                {products.length} {products.length === 1 ? 'product' : 'products'} found
+              </p>
+            )}
           </div>
 
           <div className="mt-4 md:mt-0 flex items-center">
@@ -121,6 +164,18 @@ export default function FitsPage() {
 
           <div className="flex items-center gap-2">
             <span className="font-semibold text-white">Category:</span>
+             {/* Add an 'All' button for categories */}
+             <button
+                key="all"
+                onClick={() => setSelectedCategory(null)} // Set to null for 'All'
+                className={`px-3 py-1 rounded-full text-sm font-medium border transition-all ${
+                  selectedCategory === null
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'bg-white text-black border-gray-300 hover:border-black'
+                }`}
+              >
+                All
+              </button>
             {allCategories.map((cat) => (
               <button
                 key={cat}
@@ -173,7 +228,7 @@ export default function FitsPage() {
               border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            <p>Failed to load products. Please try again later.</p>
+            <p className="text-red-400">Failed to load products. Please try again later.</p>
           </div>
         ) : products.length === 0 ? (
           <div
@@ -192,15 +247,10 @@ export default function FitsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in">
-           {products
-  .filter((product) =>
-    ['tshirts', 'hoodies', 'tops', 'sweatshirts'].includes(
-      product.category.toLowerCase()
-    )
-  )
-  .map((product) => (
-    <ProductCard key={product.id || product.id} product={product} />
-))}
+           {/* The filtering logic here is no longer needed as Supabase handles it */}
+           {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
         )}
       </div>
