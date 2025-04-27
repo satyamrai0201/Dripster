@@ -14,21 +14,7 @@ import {
 } from '@/components/ui/select';
 
 // Import Supabase client
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client (replace with your actual Supabase URL and Anon Key)
-// It's recommended to use environment variables for these keys
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Ensure keys are defined before creating the client
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase URL or Anon Key is not defined.');
-  // Handle this error appropriately in a real application (e.g., show an error message)
-}
-
-const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
-
+import { supabase } from '../lib/supabaseClient';
 
 const WOMEN_CATEGORIES = ['tops', 'sweatshirts', 'sneakers', 'accessories'];
 // Genders is not needed as state/filter for this page, as it's fixed to 'women'

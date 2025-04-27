@@ -10,6 +10,7 @@ import { ProductCard } from '@/components/ui/product-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Helmet } from 'react-helmet';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -22,8 +23,18 @@ export default function ProductDetail() {
   const { attemptPurchase, attemptWishlist } = useProtectedPurchase();
 
   // Fetch product details
-  const { data: product, isLoading, error } = useQuery<Product>({
-    queryKey: [`/api/products/${id}`],
+  const { data: product, isLoading, error } = useQuery<Product | null>({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', Number(id))
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    enabled: !!id,
   });
 
   // Fetch similar products

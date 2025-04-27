@@ -1,23 +1,45 @@
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { ProductCard } from '@/components/ui/product-card';
-import { Product } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Product } from '@/types';
+
+// Import Supabase client
+import { supabase } from '@/lib/supabaseClient'; // use the correct relative path
 
 export default function SaleProducts() {
   const { data: products, isLoading, error } = useQuery<Product[]>({
-    queryKey: ['/api/products?onSale=true&limit=4'],
+    queryKey: ['sale-products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .not('original_price', 'is', null)
+        .order('discount', { ascending: false })
+        .limit(4);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data || []; // Return empty array if no data
+    },
   });
-  
-  // Render skeleton loading state
-  if (isLoading) {
-    return (
-      <section className="container mx-auto px-4 py-16">
-        <div className="flex justify-between items-center mb-8">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-6 w-24" />
+
+  return (
+    <section className="container mx-auto px-4 py-16">
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center">
+          <h2 className="text-2xl md:text-3xl font-montserrat font-bold mr-3">Sale</h2>
+          <span className="bg-red-500 text-white text-sm px-2 py-1 rounded-full">Up to 30% off</span>
         </div>
-        
+        <Link href="/sale" className="text-primary flex items-center hover:underline">
+          View All <i className="ri-arrow-right-line ml-1"></i>
+        </Link>
+      </div>
+
+      {/* Loading */}
+      {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="rounded-xl overflow-hidden" style={{
@@ -37,38 +59,23 @@ export default function SaleProducts() {
             </div>
           ))}
         </div>
-      </section>
-    );
-  }
-  
-  // Render error state
-  if (error) {
-    return (
-      <section className="container mx-auto px-4 py-16">
-        <div className="flex justify-center items-center p-8 rounded-xl glass-card">
-          <p>Failed to load sale products. Please try again later.</p>
-        </div>
-      </section>
-    );
-  }
+      )}
 
-  return (
-    <section className="container mx-auto px-4 py-16">
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center">
-          <h2 className="text-2xl md:text-3xl font-montserrat font-bold mr-3">Sale</h2>
-          <span className="bg-red-500 text-white text-sm px-2 py-1 rounded-full">Up to 30% off</span>
+      {/* Error */}
+      {error && (
+        <div className="flex justify-center items-center p-8 rounded-xl glass-card">
+          <p className="text-red-400">Failed to load sale products. Please try again later.</p>
         </div>
-        <Link href="/sale" className="text-primary flex items-center hover:underline">
-  View All <i className="ri-arrow-right-line ml-1"></i>
-</Link>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {products?.map(product => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      )}
+
+      {/* Products */}
+      {!isLoading && !error && Array.isArray(products) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {products.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

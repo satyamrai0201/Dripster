@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, signOut, User } from 'firebase/auth';
+import { signOut, User } from 'firebase/auth';
+import { auth } from '../../lib/firebase';
 
 interface Address {
   id: string;
@@ -76,7 +77,6 @@ const ProfileMenu = ({ user }: ProfileMenuProps) => {
 
   const handleSignOut = async () => {
     try {
-      const auth = getAuth();
       await signOut(auth);
       setIsOpen(false);
     } catch (error) {

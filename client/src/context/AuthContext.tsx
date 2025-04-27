@@ -1,15 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  User, 
-  signInWithEmailAndPassword, 
+import {
+  onAuthStateChanged,
+  User,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
   signOut as firebaseSignOut
 } from 'firebase/auth';
 import { useLocation } from 'wouter';
+import { auth } from '../lib/firebase';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -46,7 +46,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
       setLoading(false);
@@ -75,7 +74,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithEmail = async (email: string, password: string) => {
     try {
-      const auth = getAuth();
       await signInWithEmailAndPassword(auth, email, password);
       hideLoginPopup();
       return;
@@ -87,7 +85,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const loginWithGoogle = async () => {
     try {
-      const auth = getAuth();
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       hideLoginPopup();
@@ -100,7 +97,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signup = async (email: string, password: string) => {
     try {
-      const auth = getAuth();
       await createUserWithEmailAndPassword(auth, email, password);
       hideLoginPopup();
       return;
@@ -112,7 +108,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      const auth = getAuth();
       await firebaseSignOut(auth);
       // Optional: Redirect to home page after logout
       navigate('/');

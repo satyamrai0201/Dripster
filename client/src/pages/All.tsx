@@ -14,21 +14,7 @@ import {
 } from '@/components/ui/select';
 
 // Import Supabase client
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client (replace with your actual Supabase URL and Anon Key)
-// It's recommended to use environment variables for these keys
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Ensure keys are defined before creating the client
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase URL or Anon Key is not defined.');
-  // Handle this error appropriately in a real application (e.g., show an error message)
-}
-
-const supabase = createClient(supabaseUrl!, supabaseAnonKey!);
-
+import { supabase } from '../lib/supabaseClient';
 
 const GENDERS = ['men', 'women'];
 
@@ -39,7 +25,7 @@ export default function AllProductsPage() {
   // Use the selectedGender and sortBy as part of the query key
   const queryKey = ['products', selectedGender, sortBy];
 
-  const { data: products, isLoading, error } = useQuery<Product[]>({
+  const { data: products = [], isLoading, error } = useQuery<Product[]>({
     queryKey: queryKey,
     queryFn: async () => {
       let query = supabase.from('products').select('*');
@@ -133,9 +119,9 @@ export default function AllProductsPage() {
                 onClick={() => setSelectedGender(gender === selectedGender ? null : gender)}
                 className={`px-3 py-1 rounded-full text-sm font-medium border transition-all ${
                   selectedGender === gender
-                  ? 'bg-red-600 text-white border-red-600'
-                  : 'bg-white text-black border-gray-300 hover:border-red-500'
-              }`}
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'bg-white text-black border-gray-300 hover:border-red-500'
+                }`}
               >
                 {gender.charAt(0).toUpperCase() + gender.slice(1)}
               </button>
@@ -143,43 +129,24 @@ export default function AllProductsPage() {
           </div>
         </div>
 
-        {/* All Products Banner */}
-<div className="mb-12 rounded-xl bg-gradient-to-r from-[#a52a2a] via-[#7b1e1e] to-[#1e1e1e] p-8 md:p-20 text-center text-white shadow-lg min-h-[320px] flex flex-col items-center justify-center">
-  <h2 className="text-3xl md:text-4xl font-extrabold font-montserrat mb-4">
-    Gear Up. Stand Out.
-  </h2>
-  <p className="max-w-2xl mx-auto text-base md:text-lg text-[#CCCCCC]">
-    Dive into our full collection—from the freshest apparel. Your next favorite piece is right here.
-  </p>
-</div>
-
-        {/* Loading */}
-        {isLoading && (
+        {/* Product Grid */}
+        {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <Skeleton key={i} className="h-[360px] w-full rounded-xl" />
             ))}
           </div>
-        )}
-
-        {/* Error */}
-        {error && (
+        ) : error ? (
           <div className="p-8 rounded-xl text-center border border-[rgba(255,255,255,0.1)] bg-[rgba(30,30,30,0.7)]">
             <p className="text-red-400">Failed to load products. Please try again later.</p>
           </div>
-        )}
-
-        {/* No Products */}
-        {!isLoading && Array.isArray(products) && products.length === 0 && (
+        ) : Array.isArray(products) && products.length === 0 ? (
           <div className="text-center text-[#BBBBBB] mt-8">
             <i className="ri-search-line text-4xl mb-3" />
             <p className="text-lg font-semibold">No products found</p>
             <p>Try adjusting your filters.</p>
           </div>
-        )}
-
-        {/* Product Grid */}
-        {!isLoading && Array.isArray(products) && products.length > 0 && (
+        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-slide-up-fade">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />

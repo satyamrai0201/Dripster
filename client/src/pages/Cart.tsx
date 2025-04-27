@@ -16,6 +16,12 @@ interface CartItem {
   color?: string;
 }
 
+const VALID_COUPONS = {
+  Drip15: 0.15,
+  Drip20: 0.20,
+  Sunstone25: 0.25,
+};
+
 export default function Cart() {
   const [, navigate] = useLocation();
   const [couponCode, setCouponCode] = useState('');
@@ -118,9 +124,12 @@ export default function Cart() {
   };
   
   const getCartDiscount = () => {
-    // Simple discount calculation, could be enhanced
     const subtotal = getCartSubtotal();
-    return couponCode ? Math.round(subtotal * 0.1) : 0; // 10% discount with coupon
+    const code = couponCode.trim();
+    if (code in VALID_COUPONS) {
+      return Math.round(subtotal * VALID_COUPONS[code as keyof typeof VALID_COUPONS]);
+    }
+    return 0;
   };
   
   const getShippingCost = () => {
@@ -195,7 +204,8 @@ export default function Cart() {
   };
 
   const handleApplyCoupon = () => {
-    if (!couponCode.trim()) {
+    const code = couponCode.trim();
+    if (!code) {
       toast({
         title: 'Invalid coupon',
         description: 'Please enter a valid coupon code',
@@ -203,14 +213,20 @@ export default function Cart() {
       });
       return;
     }
-    
+    if (!(code in VALID_COUPONS)) {
+      toast({
+        title: 'Invalid coupon',
+        description: 'This coupon is not valid.',
+        variant: 'destructive',
+      });
+      setCouponCode('');
+      return;
+    }
     setIsApplyingCoupon(true);
-    
-    // Simulate coupon application
     setTimeout(() => {
       toast({
         title: 'Coupon applied',
-        description: 'Discount has been applied to your cart',
+        description: `Discount (${code}) has been applied to your cart`,
       });
       setIsApplyingCoupon(false);
     }, 1000);

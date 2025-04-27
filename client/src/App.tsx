@@ -52,23 +52,11 @@ import LoginPopup from './components/auth/LoginPopup';
 import { useAuth } from './context/AuthContext';
 
 // Firebase initialization (if not done elsewhere)
-import { initializeApp } from 'firebase/app';
+// import { initializeApp } from 'firebase/app';
 
 import React from 'react';
 import { BrowserRouter, Routes,} from 'react-router-dom';
 
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyB_zhWVhNVScuCYwjf2gUpU5RHnn26902o",
-    authDomain: "dripster0201.firebaseapp.com",
-    projectId: "dripster0201",
-    storageBucket: "dripster0201.firebasestorage.app",
-    messagingSenderId: "371568789330",
-    appId: "1:371568789330:web:003d99cee881733139dc8b"
-  };
-  
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
 
 // AppContent component that uses auth hooks
 function AppContent() {
