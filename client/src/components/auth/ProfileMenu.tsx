@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, User } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
+import Avatar from '@/components/ui/avatar';
 
 interface Address {
   id: string;
@@ -47,22 +48,18 @@ const menuOptions = [
     ), path: '/payment-methods' },
 ];
 
-const getInitials = (user: User) => {
-  if (user.displayName) {
-    return user.displayName
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  }
-  if (user.email) return user.email[0].toUpperCase();
-  return 'U';
-};
-
 const ProfileMenu = ({ user }: ProfileMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const initials = (user?.displayName || user?.email || 'U')
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -95,7 +92,12 @@ const ProfileMenu = ({ user }: ProfileMenuProps) => {
         aria-haspopup="true"
       >
         <div className="h-9 w-9 rounded-full overflow-hidden border-2 border-zinc-700 bg-zinc-800 flex items-center justify-center shadow-md transition-all hover:ring-2 hover:ring-red-400">
-          <span className="text-lg font-bold text-white select-none">{getInitials(user)}</span>
+          <Avatar 
+            photoURL={user?.photoURL || undefined}
+            displayName={user?.displayName || undefined}
+            email={user?.email || undefined}
+            size={36}
+          />
         </div>
       </button>
 

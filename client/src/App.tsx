@@ -44,6 +44,7 @@ import ProfilePage from "./pages/ProfilePage";
 import CheckoutPayment from "./pages/CheckoutPayment";
 import CheckoutAddress from './pages/CheckoutAddress';
 import OrderSuccess from '@/components/OrderSuccess';
+import DripAssistant from './pages/DripAssistant';
 
 
 // Import our new Auth components
@@ -107,6 +108,8 @@ function AppContent() {
           <Route path="/checkout-payment" component={CheckoutPayment} />
           <Route path="/checkout/address" component={CheckoutAddress} />
           <Route path="/order-success" component={OrderSuccess} />
+          <Route path="/drip-assistant" component={DripAssistant} />
+         
 
           {/* 👇 404 Page should be LAST */}
           <Route component={NotFound} />

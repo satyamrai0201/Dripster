@@ -11,6 +11,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Helmet } from 'react-helmet';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
+import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from '@/context/AuthContext';
+import Avatar from '@/components/ui/avatar';
+
+interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  date: string;
+  photoURL?: string;
+  email?: string;
+}
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +34,7 @@ export default function ProductDetail() {
   const [isFavorite, setIsFavorite] = useState(false);
   const { toast } = useToast();
   const { attemptPurchase, attemptWishlist } = useProtectedPurchase();
+  const { currentUser } = useAuth();
 
   // Fetch product details
   const { data: product, isLoading, error } = useQuery<Product | null>({
@@ -185,6 +199,177 @@ export default function ProductDetail() {
     }
   };
 
+  // Pre-written Indian-style reviews for different product categories
+  const preWrittenReviews: Record<string, any[]> = {
+    tshirts: [
+      { id: '1', name: 'Rahul Sharma', rating: 5, comment: 'Bahut badhiya quality hai! Material ekdum premium feel karta hai. Perfect fit mila.', date: '2024-03-15' },
+      { id: '2', name: 'Priya Patel', rating: 4, comment: 'Color bilkul photos jaisa hai. Comfortable hai daily wear ke liye. Thoda pricey hai but worth it.', date: '2024-03-10' },
+      { id: '3', name: 'Amit Kumar', rating: 5, comment: 'Stylish design hai, office wear ke liye perfect. Fabric quality bahut acchi hai.', date: '2024-03-05' },
+      { id: '4', name: 'Neha Gupta', rating: 4, comment: 'Size chart accurate hai. Delivery time pe mila. Overall satisfied with purchase.', date: '2024-03-01' },
+      { id: '5', name: 'Vikram Singh', rating: 5, comment: 'Washing ke baad bhi color fade nahi hua. Durability bahut acchi hai. Recommend karunga!', date: '2024-02-28' }
+    ],
+    hoodies: [
+      { id: '1', name: 'Arjun Mehta', rating: 5, comment: 'Winter ke liye perfect hai! Bahut warm hai aur style bhi zabardast hai.', date: '2024-03-15' },
+      { id: '2', name: 'Sneha Reddy', rating: 4, comment: 'Comfort level ekdum top notch hai. College ke liye best hai. Pocket space bhi accha hai.', date: '2024-03-12' },
+      { id: '3', name: 'Raj Malhotra', rating: 5, comment: 'Premium feel hai material mein. Gym wear ke liye bhi perfect hai. Worth every penny!', date: '2024-03-08' },
+      { id: '4', name: 'Ananya Joshi', rating: 4, comment: 'Color combination bahut stylish hai. Perfect for casual outings. Quality meets expectations.', date: '2024-03-05' },
+      { id: '5', name: 'Karan Verma', rating: 5, comment: 'Hood quality bahut acchi hai. Rain protection bhi provide karta hai. Must buy!', date: '2024-03-01' }
+    ],
+    sneakers: [
+      { id: '1', name: 'Vivek Nair', rating: 5, comment: 'Comfort level ekdum zabardast hai! Daily wear ke liye perfect. Cushioning bahut acchi hai.', date: '2024-03-15' },
+      { id: '2', name: 'Divya Sharma', rating: 4, comment: 'Stylish design hai, office wear ke liye perfect. Thoda pricey hai but worth it.', date: '2024-03-12' },
+      { id: '3', name: 'Rohan Kapoor', rating: 5, comment: 'Gym ke liye best hai! Grip bahut acchi hai. Quality premium hai.', date: '2024-03-10' },
+      { id: '4', name: 'Pooja Patel', rating: 4, comment: 'Color combination bahut attractive hai. Perfect for casual outings. Comfortable for long hours.', date: '2024-03-08' },
+      { id: '5', name: 'Aditya Singh', rating: 5, comment: 'Durability bahut acchi hai. Daily use ke baad bhi new jaisa dikhta hai. Highly recommended!', date: '2024-03-05' }
+    ],
+    accessories: [
+      { id: '1', name: 'Meera Kapoor', rating: 5, comment: 'Design ekdum unique hai! Quality premium hai. Perfect for special occasions.', date: '2024-03-15' },
+      { id: '2', name: 'Siddharth Gupta', rating: 4, comment: 'Stylish hai aur price bhi reasonable hai. Daily wear ke liye perfect.', date: '2024-03-12' },
+      { id: '3', name: 'Riya Sharma', rating: 5, comment: 'Color combination bahut attractive hai. Perfect gift option hai.', date: '2024-03-10' },
+      { id: '4', name: 'Aryan Patel', rating: 4, comment: 'Quality meets expectations. Worth the price. Delivery time pe mila.', date: '2024-03-08' },
+      { id: '5', name: 'Zara Khan', rating: 5, comment: 'Design zabardast hai! Compliments milte hain. Must buy!', date: '2024-03-05' }
+    ],
+    tops: [
+      { id: '1', name: 'Anjali Desai', rating: 5, comment: 'Fabric quality bahut acchi hai! Perfect for office wear. Fit bilkul sahi hai.', date: '2024-03-15' },
+      { id: '2', name: 'Kavya Sharma', rating: 4, comment: 'Stylish design hai, casual wear ke liye perfect. Color bilkul photos jaisa hai.', date: '2024-03-12' },
+      { id: '3', name: 'Pooja Mehta', rating: 5, comment: 'Comfortable hai daily wear ke liye. Quality premium hai. Worth every penny!', date: '2024-03-10' },
+      { id: '4', name: 'Riya Patel', rating: 4, comment: 'Size chart accurate hai. Delivery time pe mila. Overall satisfied with purchase.', date: '2024-03-08' },
+      { id: '5', name: 'Neha Gupta', rating: 5, comment: 'Washing ke baad bhi color fade nahi hua. Durability bahut acchi hai. Recommend karungi!', date: '2024-03-05' }
+    ],
+    sweatshirts: [
+      { id: '1', name: 'Priya Singh', rating: 5, comment: 'Winter ke liye perfect hai! Bahut warm hai aur style bhi zabardast hai.', date: '2024-03-15' },
+      { id: '2', name: 'Ananya Reddy', rating: 4, comment: 'Comfort level ekdum top notch hai. College ke liye best hai. Pocket space bhi accha hai.', date: '2024-03-12' },
+      { id: '3', name: 'Divya Malhotra', rating: 5, comment: 'Premium feel hai material mein. Gym wear ke liye bhi perfect hai. Worth every penny!', date: '2024-03-10' },
+      { id: '4', name: 'Riya Joshi', rating: 4, comment: 'Color combination bahut stylish hai. Perfect for casual outings. Quality meets expectations.', date: '2024-03-08' },
+      { id: '5', name: 'Meera Verma', rating: 5, comment: 'Hood quality bahut acchi hai. Rain protection bhi provide karta hai. Must buy!', date: '2024-03-05' }
+    ]
+  };
+
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewForm, setReviewForm] = useState<{ name: string; rating: number; comment: string; editingId: string | null; photoURL: string; email: string }>({ name: '', rating: 5, comment: '', editingId: null, photoURL: '', email: '' });
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  // Add a generic fallback demo reviews set
+  const fallbackDemoReviews: Review[] = [
+    { id: 'demo1', name: 'Demo User', rating: 5, comment: 'Great product! Highly recommended.', date: '2024-01-01' },
+    { id: 'demo2', name: 'Sample Buyer', rating: 4, comment: 'Good quality and fast delivery.', date: '2024-01-02' },
+    { id: 'demo3', name: 'Test Reviewer', rating: 5, comment: 'Exceeded my expectations!', date: '2024-01-03' },
+    { id: 'demo4', name: 'Priya Example', rating: 4, comment: 'Nice fit and comfortable.', date: '2024-01-04' },
+    { id: 'demo5', name: 'Amit Example', rating: 5, comment: 'Would buy again!', date: '2024-01-05' },
+  ];
+
+  // In the useEffect that loads reviews, ensure fallback demo reviews for any product
+  useEffect(() => {
+    if (!product) return;
+    const reviewsKey = `dripster-reviews-${product.id}`;
+    const stored = localStorage.getItem(reviewsKey);
+    if (stored) {
+      setReviews(JSON.parse(stored));
+    } else {
+      // Use category-specific demo reviews, or fallback to tshirts, or fallback to generic
+      const pre = preWrittenReviews[product.category] || preWrittenReviews.tshirts || fallbackDemoReviews;
+      setReviews(pre);
+      localStorage.setItem(reviewsKey, JSON.stringify(pre));
+    }
+  }, [product]);
+
+  // Save reviews to localStorage on change
+  useEffect(() => {
+    if (!product) return;
+    const reviewsKey = `dripster-reviews-${product.id}`;
+    localStorage.setItem(reviewsKey, JSON.stringify(reviews));
+  }, [reviews, product]);
+
+  // Helper to get initials from a name
+  function getInitials(name: string) {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+  // Helper to get a color from a string (for avatar bg)
+  function stringToColor(str: string) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00FFFFFF)
+      .toString(16)
+      .toUpperCase();
+    return '#' + '00000'.substring(0, 6 - c.length) + c;
+  }
+
+  // When opening the form, auto-fill name/photo from user
+  function openReviewForm(editingReview: Review | null = null) {
+    if (editingReview) {
+      setReviewForm({
+        name: editingReview.name,
+        rating: editingReview.rating,
+        comment: editingReview.comment,
+        editingId: editingReview.id,
+        photoURL: editingReview.photoURL || '',
+        email: editingReview.email || ''
+      });
+    } else {
+      setReviewForm({
+        name: currentUser?.displayName || '',
+        rating: 5,
+        comment: '',
+        editingId: null,
+        photoURL: currentUser?.photoURL || '',
+        email: currentUser?.email || ''
+      });
+    }
+    setShowForm(true);
+  }
+
+  // Update handleReviewSubmit to include photoURL
+  function handleReviewSubmit(e: any) {
+    e.preventDefault();
+    if (!reviewForm.name.trim() || !reviewForm.comment.trim()) return;
+    setSubmitting(true);
+    setTimeout(() => { // Simulate async for animation
+      if (reviewForm.editingId) {
+        setReviews(reviews.map(r => r.id === reviewForm.editingId ? { ...r, ...reviewForm, date: new Date().toISOString().slice(0,10), editingId: undefined } : r));
+      } else {
+        setReviews([
+          { id: uuidv4(), name: reviewForm.name, rating: reviewForm.rating, comment: reviewForm.comment, date: new Date().toISOString().slice(0,10), photoURL: reviewForm.photoURL, email: reviewForm.email },
+          ...reviews
+        ]);
+      }
+      setReviewForm({ name: '', rating: 5, comment: '', editingId: null, photoURL: '', email: '' });
+      setShowForm(false);
+      setSubmitting(false);
+    }, 700); // 700ms for visible animation
+  }
+
+  // Only show Edit/Delete for reviews where the logged-in user's email matches the review's email
+  function isOwnReview(r: Review) {
+    if (!currentUser || !r.email) return false;
+    return r.email === currentUser.email;
+  }
+
+  function handleEditReview(id: string) {
+    const r = reviews.find(r => r.id === id);
+    if (r) openReviewForm(r);
+  }
+  function handleDeleteReview(id: string) {
+    setRemovingId(id);
+    setTimeout(() => {
+      setReviews(reviews.filter(r => r.id !== id));
+      setRemovingId(null);
+    }, 400); // 400ms for fade-out
+  }
+
+  const REVIEWS_PER_PAGE = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
+  const paginatedReviews = reviews.slice((currentPage - 1) * REVIEWS_PER_PAGE, currentPage * REVIEWS_PER_PAGE);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -331,7 +516,7 @@ export default function ProductDetail() {
                   ))}
                 </div>
                 <span className="text-sm ml-2">
-                  {product.rating.toFixed(1)} ({product.reviewCount} reviews)
+                  {product.rating.toFixed(1)}
                 </span>
               </div>
 
@@ -401,10 +586,10 @@ export default function ProductDetail() {
               </div>
 
               <Tabs defaultValue="description" className="mt-6">
-                <TabsList className="grid grid-cols-3 bg-[rgba(42,42,42,0.5)]">
-                  <TabsTrigger value="description">Description</TabsTrigger>
-                  <TabsTrigger value="details">Details</TabsTrigger>
-                  <TabsTrigger value="shipping">Shipping</TabsTrigger>
+                <TabsList className="flex justify-center gap-2 bg-[rgba(42,42,42,0.5)] rounded-full p-1 w-full max-w-xl mx-auto mb-4">
+                  <TabsTrigger value="description" className="flex-1">Description</TabsTrigger>
+                  <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
+                  <TabsTrigger value="shipping" className="flex-1">Shipping</TabsTrigger>
                 </TabsList>
                 <TabsContent value="description" className="py-4 text-[#BBBBBB]">
                   {product.description}
@@ -455,12 +640,108 @@ export default function ProductDetail() {
                   <i className="ri-flash-line mr-2"></i> Buy Now
                 </button>
               </div>
+
+              {/* Reviews Section - full width */}
+              <div className="mt-10 w-full">
+                <div className="mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-center items-start gap-4">
+                  <h4 className="font-semibold text-lg">Customer Reviews</h4>
+                  <button className="bg-primary text-white px-4 py-1 rounded-full text-sm" onClick={() => openReviewForm()}>Add Review</button>
+                </div>
+                {showForm && (
+                  <form onSubmit={handleReviewSubmit} className="mb-6 bg-[rgba(255,255,255,0.05)] p-4 rounded-xl w-full">
+                    <div className="mb-2 flex items-center gap-3">
+                      {/* Avatar preview */}
+                      {reviewForm.photoURL || reviewForm.name ? (
+                        <Avatar 
+                          photoURL={reviewForm.photoURL || undefined}
+                          displayName={reviewForm.name || undefined}
+                          email={reviewForm.email || undefined}
+                          size={32}
+                        />
+                      ) : null}
+                      <input className="w-full p-2 rounded bg-black/30 border border-[rgba(255,255,255,0.1)] text-white" placeholder="Your Name" value={reviewForm.name} onChange={e => setReviewForm(f => ({ ...f, name: e.target.value }))} disabled={!!currentUser?.displayName} />
+                    </div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-sm">Rating:</span>
+                      {[1,2,3,4,5].map(n => (
+                        <button type="button" key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}>
+                          <i className={`ri-star-${reviewForm.rating >= n ? 'fill' : 'line'} text-[#FFC107] text-lg`}></i>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mb-2">
+                      <textarea className="w-full p-2 rounded bg-black/30 border border-[rgba(255,255,255,0.1)] text-white" placeholder="Your Review" value={reviewForm.comment} onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))} />
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="submit" className="bg-primary text-white px-4 py-1 rounded-full text-sm flex items-center justify-center min-w-[80px]" disabled={submitting}>
+                        {submitting ? (
+                          <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                        ) : null}
+                        {reviewForm.editingId ? 'Update' : 'Submit'}
+                      </button>
+                      <button type="button" className="bg-gray-600 text-white px-4 py-1 rounded-full text-sm" onClick={() => { setShowForm(false); setReviewForm({ name: '', rating: 5, comment: '', editingId: null, photoURL: '', email: '' }); }} disabled={submitting}>Cancel</button>
+                    </div>
+                  </form>
+                )}
+                <div className="space-y-4 w-full">
+                  {paginatedReviews.length === 0 && <div className="text-[#BBBBBB]">No reviews yet.</div>}
+                  {paginatedReviews.map(r => (
+                    <div key={r.id} className={`bg-[rgba(255,255,255,0.03)] p-4 rounded-xl flex gap-3 items-start w-full transition-all duration-400 ${removingId === r.id ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100'}`}>
+                      {/* Avatar */}
+                      <Avatar 
+                        photoURL={r.photoURL || undefined}
+                        displayName={r.name || undefined}
+                        email={r.email || undefined}
+                        size={36}
+                      />
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-medium">{r.name}</span>
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <i key={i} className={`ri-star-${i < r.rating ? 'fill' : 'line'} text-[#FFC107] text-xs`}></i>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-textSecondary text-xs mb-1">{r.comment}</p>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-[rgba(255,255,255,0.4)]">{r.date}</span>
+                          <div className="flex gap-2">
+                            {isOwnReview(r) && <button className="text-primary text-xs" onClick={() => openReviewForm(r)}>Edit</button>}
+                            {isOwnReview(r) && <button className="text-red-400 text-xs" onClick={() => handleDeleteReview(r.id)}>Delete</button>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-4 mt-6">
+                    <button
+                      className="px-3 py-1 rounded bg-[rgba(255,255,255,0.08)] text-white disabled:opacity-40"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-[#BBBBBB]">Page {currentPage} of {totalPages}</span>
+                    <button
+                      className="px-3 py-1 rounded bg-[rgba(255,255,255,0.08)] text-white disabled:opacity-40"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Similar Products */}
-        {similarProducts && similarProducts.length > 0 && (
+        {Array.isArray(similarProducts) && similarProducts.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl md:text-3xl font-montserrat font-bold mb-8">You May Also Like</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

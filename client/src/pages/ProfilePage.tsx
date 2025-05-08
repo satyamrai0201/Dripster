@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { updateProfile } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import Avatar from '@/components/ui/avatar';
 
 interface UserProfile {
   displayName: string;
@@ -21,6 +22,15 @@ const ProfilePage = () => {
   });
   const [editing, setEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const initials = (currentUser?.displayName || currentUser?.email || 'U')
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   // Load user data on mount and when currentUser changes
   useEffect(() => {
@@ -91,9 +101,12 @@ const ProfilePage = () => {
         
         <div className="flex flex-col md:flex-row items-center md:items-start gap-10 mb-12">
           <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-red-500 bg-zinc-800 shadow-lg flex items-center justify-center">
-            <div className="h-full w-full flex items-center justify-center bg-red-500 text-white font-bold text-4xl">
-              {currentUser.displayName?.charAt(0) || currentUser.email?.charAt(0) || 'U'}
-            </div>
+            <Avatar 
+              photoURL={currentUser.photoURL || undefined}
+              displayName={currentUser.displayName || undefined}
+              email={currentUser.email || undefined}
+              size={128} 
+            />
           </div>
 
           <div className="flex-1 w-full">

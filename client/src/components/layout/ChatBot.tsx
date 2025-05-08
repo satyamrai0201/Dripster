@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '@/types';
+import { useLocation } from 'wouter';
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -7,12 +8,13 @@ export default function ChatBot() {
     {
       id: 1,
       sender: 'bot',
-      message: "Hi there! How can I help you today? You can ask me about your order, returns, or payment options.",
+      message: "Hi there! How can I help you today? You can ask me about your order, returns, or payment options. Or try our new Drip Assistant for fashion advice!",
       timestamp: new Date().toISOString()
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [, setLocation] = useLocation();
 
   // Scroll to bottom of chat whenever messages change
   useEffect(() => {
@@ -198,6 +200,15 @@ export default function ChatBot() {
                 onClick={() => handleQuickQuestion("Do you offer COD?")}
               >
                 Do you offer COD?
+              </button>
+              <button 
+                className="text-xs bg-primary text-white px-3 py-1 rounded-full m-1 hover:bg-[#e03535] transition-colors"
+                onClick={() => {
+                  setLocation('/drip-assistant');
+                  setIsOpen(false);
+                }}
+              >
+                Try Drip Assistant
               </button>
             </div>
           </div>
