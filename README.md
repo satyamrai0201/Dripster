@@ -5,6 +5,9 @@ Dripster is a modern, fast, and aesthetic fashion e-commerce web app designed fo
 🚀 Live Demo: [https://dripster-trendy-fashion.web.app](https://dripster-trendy-fashion.web.app)
 🚀 SRS Docs: [https://drive.google.com/drive/folders/1Nk7hUu7IdcoczYfL-2FZMffl-Tsn4kU-?usp=sharing](https://drive.google.com/drive/folders/1Nk7hUu7IdcoczYfL-2FZMffl-Tsn4kU-?usp=sharing)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
 
 ---
 
