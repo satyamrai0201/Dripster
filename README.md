@@ -2,7 +2,7 @@
 
 Dripster is a modern, fast, and aesthetic fashion e-commerce web app designed for Gen Z consumers. Built with **React.js + TypeScript**, styled using **Tailwind CSS**, and powered by **Firebase** and **Supabase**, it delivers a curated shopping experience that feels bold and lightning-fast.
 
-🚀 Live Demo: [https://dripster-trendy-fashion.web.app](https://dripster-trendy-fashion.web.app)
+🚀 Live Demo: [https://dripster-trendy-fashion.web.app](https://dripster-trendy-fashion.web.app)  
 🚀 SRS Docs: [https://drive.google.com/drive/folders/1Nk7hUu7IdcoczYfL-2FZMffl-Tsn4kU-?usp=sharing](https://drive.google.com/drive/folders/1Nk7hUu7IdcoczYfL-2FZMffl-Tsn4kU-?usp=sharing)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
