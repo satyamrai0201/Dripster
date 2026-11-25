@@ -58,8 +58,8 @@ app.use((req, res, next) => {
       console.warn("⚠️  Continuing without MongoDB - using in-memory storage");
     }
 
-    // Register all routes
-    await registerRoutes(app);
+    // Register routes once and use the same HTTP server for Vite's HMR.
+    const server = await registerRoutes(app);
 
     // Global error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -71,15 +71,14 @@ app.use((req, res, next) => {
 
     // Setup Vite (only in development)
     if (app.get("env") === "development") {
-      const server = await registerRoutes(app);
       await setupVite(app, server);
     } else {
       serveStatic(app);
     }
 
     // Start the server
-    const port = 5001;
-    app.listen(port, () => {
+    const port = Number(process.env.PORT) || 5001;
+    server.listen(port, () => {
       log(`🚀 Server is running at http://localhost:${port}`);
     });
   } catch (error) {

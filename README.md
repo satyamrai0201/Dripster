@@ -50,15 +50,27 @@ Clone the repo and install dependencies:
 git clone https://github.com/your-username/dripster.git
 cd dripster
 npm install
+```
 
 Then, build the project:
 
+```bash
 npm run build
+```
 
 To run the dev server:
 
+```bash
 npm run dev
+```
 
+The development server runs the frontend and backend together. Set `PORT` if the default port is already in use, for example:
+
+```bash
+PORT=5002 npm run dev
+```
+
+Supabase is optional for local development. Without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `client/.env`, product queries use the local Express API and its seeded in-memory catalog. This catalog resets when the server restarts. Never put a Supabase service-role key in frontend code or a public repository.
 
 ⸻
 
